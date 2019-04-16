@@ -33,7 +33,6 @@
     </div>
     @Html.AntiForgeryToken()
     @Scripts.Render("~/bundles/jquery")
-    @Scripts.Render("~/bundles/bootstrap")
     <script>
         loadCaptcha();
         function loadCaptcha() {
@@ -44,14 +43,14 @@
                 success: function (json) {
                     var bg = createCanvas(280, 155);
                     bg.className = 'bg_img';
-                    var slider = createCanvas(62, 155);
-                    slider.className = 'bg_slider';
+                    bg_slider = createCanvas(62, 155);
+                    bg_slider.className = 'bg_slider';
                     CanvasSetImage(bg, json.background);
-                    CanvasSetImage(slider, json.slider);
+                    CanvasSetImage(bg_slider, json.slider);
                     var doc = document.getElementsByClassName("sc_net_bgimg")[0];
                     doc.innerHTML = "";
                     doc.appendChild(bg);
-                    doc.appendChild(slider);
+                    doc.appendChild(bg_slider);
                 }
             })
         }
@@ -72,7 +71,16 @@
             ctx.fillStyle = 'rgba(255, 255, 255, 0)';
             ctx.drawImage(_img, 0, 0);
         }
-        var slider = document.getElementsByClassName("sc_net_slider_icon")[0];
+
+        function getByClassName0(className) {
+            return document.getElementsByClassName(className)[0];
+        };
+
+        var slider = getByClassName0("sc_net_slider_icon");
+        var text = getByClassName0("sc_net_slider_text");
+        var area = getByClassName0("sc_net_slider_area");
+        var bg_slider;
+
         slider.addEventListener('mousedown', handleDragStart);
         slider.addEventListener('touchstart', handleDragStart);
         document.addEventListener('mousemove', handleDragMove);
@@ -83,53 +91,37 @@
         document.addEventListener('touchstart', function () { return false; });
 
         var originX, originY, trail = [],
-            isMouseDown = false
+            isMouseDown = false;
 
-        var handleDragStart = function (e) {
-            if (that.text.hasClass('text-danger')) return;
+        var isOk = false;
+
+        function handleDragStart(e) {
+            console.log("handleDragStart");
+            if (isOk) return;
             originX = e.clientX || e.touches[0].clientX;
             originY = e.clientY || e.touches[0].clientY;
             isMouseDown = true;
         };
 
-        var handleDragMove = function (e) {
+        function handleDragMove(e) {
             if (!isMouseDown) return false;
             var eventX = e.clientX || e.touches[0].clientX;
             var eventY = e.clientY || e.touches[0].clientY;
             var moveX = eventX - originX;
             var moveY = eventY - originY;
-            if (moveX < 0 || moveX + 40 > that.options.width) return false;
-            that.slider.style.left = (moveX - 1) + 'px';
-            var blockLeft = (that.options.width - 40 - 20) / (that.options.width - 40) * moveX;
-            that.block.style.left = blockLeft + 'px';
-
-            that.sliderContainer.addClass('sliderContainer_active');
-            that.sliderMask.style.width = (moveX + 4) + 'px';
-            trail.push(moveY);
+            if (moveX >= 0 && moveX <= 243) {
+                slider.style.left = moveX + "px";
+                bg_slider.style.left = moveX/243*218 + "px";
+            }
+            
         };
 
-        var handleDragEnd = function (e) {
+        function handleDragEnd(e) {
             if (!isMouseDown) return false
             isMouseDown = false
             var eventX = e.clientX || e.changedTouches[0].clientX
             if (eventX == originX) return false
-            that.sliderContainer.removeClass('sliderContainer_active');
-            that.trail = trail
-            var {
-                spliced,
-                verified
-            } = that.verify()
-            if (spliced && verified) {
-                that.sliderContainer.addClass('sliderContainer_success');
-                if ($.isFunction(that.options.onSuccess)) that.options.onSuccess.call(that.$element);
-            } else {
-                that.sliderContainer.addClass('sliderContainer_fail');
-                if ($.isFunction(that.options.onFail)) that.options.onFail.call(that.$element);
-                setTimeout(() => {
-                    that.text.text(that.options.failedText);
-                    that.reset();
-                }, 1000)
-            }
+            
         };
     </script>
 </body>
