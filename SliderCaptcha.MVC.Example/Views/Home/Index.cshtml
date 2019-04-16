@@ -1,0 +1,136 @@
+﻿
+@{
+    Layout = null;
+    // "➞", "✓", "✕"
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>验证码</title>
+    @Styles.Render("~/Content/css")
+</head>
+<body>
+    <div>
+        <div class="sc-captcha">
+            <div class="sc_net_panel">
+                <div class="sc_net_bg">
+                    <div class="sc_net_bgimg">
+                    </div>
+                    <div class="bg_refresh" onclick="loadCaptcha()" title="刷新">↻</div>
+                </div>
+            </div>
+            <div class="sc_net_panel">
+                <div class="sc_net_slider">
+                    <div class="sc_net_slider_text">向右拖动滑块填充拼图</div>
+                    <div class="sc_net_slider_area"></div>
+                    <div class="sc_net_slider_icon">➞</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @Html.AntiForgeryToken()
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/bootstrap")
+    <script>
+        loadCaptcha();
+        function loadCaptcha() {
+            $.ajax({
+                url: "/Home/GetCaptcha",
+                type: "POST",
+                dataType: "JSON",
+                success: function (json) {
+                    var bg = createCanvas(280, 155);
+                    bg.className = 'bg_img';
+                    var slider = createCanvas(62, 155);
+                    slider.className = 'bg_slider';
+                    CanvasSetImage(bg, json.background);
+                    CanvasSetImage(slider, json.slider);
+                    var doc = document.getElementsByClassName("sc_net_bgimg")[0];
+                    doc.innerHTML = "";
+                    doc.appendChild(bg);
+                    doc.appendChild(slider);
+                }
+            })
+        }
+
+        function createCanvas(width, height) {
+            var canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            return canvas;
+        };
+
+
+        function CanvasSetImage(_canvas,base64) {
+            var _img = document.createElement("img");
+            _img.src = base64;
+            var ctx = _canvas.getContext("2d");
+            ctx.fillRect(0, 0, _canvas.clientWidth, _canvas.clientHeight);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0)';
+            ctx.drawImage(_img, 0, 0);
+        }
+        var slider = document.getElementsByClassName("sc_net_slider_icon")[0];
+        slider.addEventListener('mousedown', handleDragStart);
+        slider.addEventListener('touchstart', handleDragStart);
+        document.addEventListener('mousemove', handleDragMove);
+        document.addEventListener('touchmove', handleDragMove);
+        document.addEventListener('mouseup', handleDragEnd);
+        document.addEventListener('touchend', handleDragEnd);
+        document.addEventListener('mousedown', function () { return false; });
+        document.addEventListener('touchstart', function () { return false; });
+
+        var originX, originY, trail = [],
+            isMouseDown = false
+
+        var handleDragStart = function (e) {
+            if (that.text.hasClass('text-danger')) return;
+            originX = e.clientX || e.touches[0].clientX;
+            originY = e.clientY || e.touches[0].clientY;
+            isMouseDown = true;
+        };
+
+        var handleDragMove = function (e) {
+            if (!isMouseDown) return false;
+            var eventX = e.clientX || e.touches[0].clientX;
+            var eventY = e.clientY || e.touches[0].clientY;
+            var moveX = eventX - originX;
+            var moveY = eventY - originY;
+            if (moveX < 0 || moveX + 40 > that.options.width) return false;
+            that.slider.style.left = (moveX - 1) + 'px';
+            var blockLeft = (that.options.width - 40 - 20) / (that.options.width - 40) * moveX;
+            that.block.style.left = blockLeft + 'px';
+
+            that.sliderContainer.addClass('sliderContainer_active');
+            that.sliderMask.style.width = (moveX + 4) + 'px';
+            trail.push(moveY);
+        };
+
+        var handleDragEnd = function (e) {
+            if (!isMouseDown) return false
+            isMouseDown = false
+            var eventX = e.clientX || e.changedTouches[0].clientX
+            if (eventX == originX) return false
+            that.sliderContainer.removeClass('sliderContainer_active');
+            that.trail = trail
+            var {
+                spliced,
+                verified
+            } = that.verify()
+            if (spliced && verified) {
+                that.sliderContainer.addClass('sliderContainer_success');
+                if ($.isFunction(that.options.onSuccess)) that.options.onSuccess.call(that.$element);
+            } else {
+                that.sliderContainer.addClass('sliderContainer_fail');
+                if ($.isFunction(that.options.onFail)) that.options.onFail.call(that.$element);
+                setTimeout(() => {
+                    that.text.text(that.options.failedText);
+                    that.reset();
+                }, 1000)
+            }
+        };
+    </script>
+</body>
+</html>
