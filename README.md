@@ -4,3 +4,5 @@
 ### WinForm Screenshot
 
 ![avatar](https://raw.githubusercontent.com/itiit/SliderCaptcha/master/Resources/WinForm.jpg)
+
+MVC Please wait
