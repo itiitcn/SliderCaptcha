@@ -3,4 +3,4 @@
 ##### 滑块验证码.NET版
 ### WinForm Screenshot
 
-![avatar](/Resources/WinForm.jpg)
+![avatar](https://raw.githubusercontent.com/itiit/SliderCaptcha/master/Resources/WinForm.jpg)
